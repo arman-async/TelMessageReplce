@@ -133,7 +133,7 @@ async def process_message_actions(
 
 
 # ======== HANDLER FOR ALL MESSAGES ========
-@client.on_message(filters.private | filters.group)
+@client.on_message(filters.private & filters.text)
 async def all_message(client: Client, message: Message):
     message_from_bot = False
     user_id = message.chat.id
