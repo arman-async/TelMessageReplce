@@ -7,13 +7,13 @@ from sqlalchemy.orm import sessionmaker
 from app import config
 
 from .models import Base
-
 engine = create_async_engine(
     config.Database().uri(),
-    pool_pre_ping=True,
-    pool_recycle=1800,
-    max_overflow=10,
-    pool_timeout=30,
+    pool_size=128,         # default: 5 → increase to handle more concurrent tasks
+    max_overflow=60,      # allows up to 50 total (20 + 30)
+    pool_timeout=30,      # how long to wait before raising TimeoutError
+    pool_recycle=1800,    # recycle connections every 30 min
+    pool_pre_ping=True,   # check connection health before using
 )
 
 SessionLocal = sessionmaker(

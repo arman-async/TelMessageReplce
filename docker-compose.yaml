@@ -7,6 +7,7 @@ services:
       MYSQL_DATABASE: reguardbot
       MYSQL_USER: bot
       MYSQL_PASSWORD: 5TOFc9GoinWvx0
+    command: --max_connections=500
     volumes:
       - db_volume:/var/lib/mysql
     ports:
