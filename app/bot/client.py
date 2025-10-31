@@ -3,6 +3,7 @@ from pyrogram import Client
 from app import config
 
 proxy = {"scheme": "socks5", "hostname": "192.168.1.100", "port": 2080}
+proxy = None
 client = Client(
     "bot",
     api_id=config.Bot().API_ID,
