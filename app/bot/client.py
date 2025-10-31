@@ -8,7 +8,7 @@ client = Client(
     api_id=config.Bot().API_ID,
     api_hash=config.Bot().API_HASH,
     bot_token=config.Bot().TOKEN,
-    
+    workers=config.Bot().WORKERS,
     proxy=proxy,
 )
 

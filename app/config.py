@@ -22,7 +22,9 @@ class Bot(BaseModel):
     API_ID: str = int(getenv("API_ID"))
     API_HASH: str = getenv("API_HASH")
     TOKEN: str = getenv("BOT_TOKEN")
+    WORKERS: int = int(getenv("BOT_WORKERS", "64"))
     OWNER_ID: str = int(getenv("OWNER_ID"))
+     
 
 class GuardJoin(BaseModel):
     API_ID: int = int(getenv("GJ_API_ID") or Bot().API_ID)
