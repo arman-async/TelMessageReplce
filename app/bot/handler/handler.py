@@ -7,11 +7,12 @@ from pyrogram.types import Message
 from sqlalchemy import select
 from redis import Redis
 from app import config, db
-
+from app import logger
 from .. import utils
 from ..client import client, guard_join
 from . import keyborad
 
+LOGGER = logger.get_logger(__name__)
 BOT_ID = int(config.Bot().TOKEN.split(":")[0])
 cache_async = db.cache.RedisCacheFunction(
     Redis(**config.Redis().model_dump())
@@ -135,6 +136,7 @@ async def process_message_actions(
 # ======== HANDLER FOR ALL MESSAGES ========
 @client.on_message(filters.private & filters.text)
 async def all_message(client: Client, message: Message):
+    
     message_from_bot = False
     user_id = message.chat.id
     chat_id = message.chat.id
@@ -142,6 +144,8 @@ async def all_message(client: Client, message: Message):
         user_id = message.from_user.id
         message_from_bot = True
 
+    LOGGER.info(f"Processing message from User ID={user_id}")
+    
     async with user_processing_lock(user_id) as lock:
         if message_from_bot:
             if await process_forced_join(client, message, user_id, chat_id):
