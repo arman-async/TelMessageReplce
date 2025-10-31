@@ -9,7 +9,7 @@ from redis import Redis
 from app import config, db
 
 from .. import utils
-from ..client import client
+from ..client import client, guard_join
 from . import keyborad
 
 BOT_ID = int(config.Bot().TOKEN.split(":")[0])
@@ -17,6 +17,8 @@ cache_async = db.cache.RedisCacheFunction(
     Redis(**config.Redis().model_dump())
 ).cache_async
 
+ForceJoinExtraAPI = config.ForceJoinExtraAPI()
+CACHE_TTL = config.CacheTTL().PROCESS_FORCED_JOIN
 MESSAGE = config.Message()
 
 user_processing_locks: dict[str, asyncio.locks.Lock] = {}
@@ -51,36 +53,46 @@ async def process_forced_join(
     user_id: int,
     chat_id: int,
 ) -> bool:
-    @cache_async(expire=5)
-    async def check(message: Message) -> bool:
+    
+    @cache_async(expire=CACHE_TTL, include={"chat_id"})
+    async def check(
+        message: Message,
+        chat_id: int = chat_id,
+        user_id: int = user_id,
+    ) -> bool:
         """
         Manages Forced membership to channels
         + Database-level locking to prevent duplicate messages
         + Delete messages if you are not a member.
         """
         join_message = db.func.ForcedJoinMessage(chat_id, db.get_session)
-        await client.send_message(user_id, "Run Check Join")
-        
+
         message_id = await join_message.get_message_id()
         if message_id:
             await client.delete_messages(user_id, int(message_id))
             await join_message.delete()
 
-        channels = await utils.forced_join(client, user_id)
+        if ForceJoinExtraAPI.USE:
+            channels = await utils.forced_join_extra(ForceJoinExtraAPI, user_id)
+        else:
+            channels = await utils.forced_join(guard_join, user_id)
+            
         if not channels:
             return False
-
-        await message.delete()
-        keyboard = keyborad.forced_join(channels, MESSAGE.BUT_JOIN, MESSAGE.BUT_JOIN_URL)
+        
+        keyboard = keyborad.forced_join(
+            channels, MESSAGE.BUT_JOIN, MESSAGE.BUT_JOIN_URL
+        )
         new_message = await client.send_message(
             user_id,
-            f"{MESSAGE.JOIN} - {chat_id=}, {user_id=}",
+            f"{MESSAGE.JOIN}",
             reply_markup=keyboard,
         )
         await join_message.add(new_message.id)
         return True
 
     if await check(message):
+        await message.delete()
         return True
     return False
 
@@ -100,6 +112,9 @@ async def process_message_actions(
         actions = result.scalars().all()
 
     for action in actions:
+        if message.text is None:
+            continue
+        
         if not re.search(action.regex, message.text):
             continue
 
@@ -118,7 +133,7 @@ async def process_message_actions(
 
 
 # ======== HANDLER FOR ALL MESSAGES ========
-@client.on_message()
+@client.on_message(filters.private | filters.group)
 async def all_message(client: Client, message: Message):
     message_from_bot = False
     user_id = message.chat.id

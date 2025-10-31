@@ -24,7 +24,17 @@ class Bot(BaseModel):
     TOKEN: str = getenv("BOT_TOKEN")
     OWNER_ID: str = int(getenv("OWNER_ID"))
 
+class GuardJoin(BaseModel):
+    API_ID: int = int(getenv("GJ_API_ID") or Bot().API_ID)
+    API_HASH: str = getenv("GJ_API_HASH") or Bot().API_HASH
+    TOKEN: str |None = getenv("GJ_TOKEN")
 
+
+class ForceJoinExtraAPI(BaseModel):
+    USE: bool = literal_eval(getenv("FORCE_JOIN_EXTRA_API_USE", "False"))
+    URL: str = getenv("FORCE_JOIN_EXTRA_API_URL")
+    KEY: str = getenv("FORCE_JOIN_EXTRA_API_KEY")
+    
 class API(BaseModel):
     TOKEN: str = getenv("HTTP_TOKEN")
     ACTIVE: bool = literal_eval(getenv("API_ACTIVE"))
@@ -54,8 +64,8 @@ class Redis(BaseModel):
     password: str = getenv("REDIS_PASSWORD")
 
 class CacheTTL(BaseModel):
-    ttl: float = float(getenv("CACHE_TTL", "5"))
-    PROCESS_FORCED_JOIN: float = float(getenv("CACHE_TTL_PROCESS_FORCED_JOIN", "1"))
+    ttl: int = int(getenv("CACHE_TTL", "5"))
+    PROCESS_FORCED_JOIN: int = int(getenv("CACHE_TTL_PROCESS_FORCED_JOIN", "1"))
     
 class Message(BaseModel):
     WLECOME :str = get_string("MESSAGE_WLECOME")
