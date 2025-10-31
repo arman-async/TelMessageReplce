@@ -1,3 +1,9 @@
+x-logging: &default-logging
+    driver: "json-file"
+    options:
+        max-size: "1m"
+        max-file: "3"
+
 services:
   db:
     image: mysql:8.0
@@ -14,6 +20,7 @@ services:
       - "3307:3306" # dev mode
     networks:
       - backend
+    logging: *default-logging
     
   redis:
     image: redis:8.0.2
@@ -27,6 +34,7 @@ services:
       - REDIS_DB=${REDIS_DB}
     networks:
       - backend
+    logging: *default-logging
 
 
   app:
@@ -45,6 +53,7 @@ services:
       - backend
     depends_on:
       - db
+    logging: *default-logging
 
 networks:
   backend:
