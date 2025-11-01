@@ -16,8 +16,6 @@ services:
     command: --max_connections=500
     volumes:
       - db_volume:/var/lib/mysql
-    ports:
-      - "3307:3306" # dev mode
     networks:
       - backend
     logging: *default-logging
@@ -46,7 +44,6 @@ services:
     volumes:
       - ./.env:/project/.env
       - ./strings.yaml:/project/strings.yaml
-      # - ./backend/.env:/project/.env # production mode
     ports:
       - "4800:9000" # dev mode
     networks:
