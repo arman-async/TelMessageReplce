@@ -156,10 +156,11 @@ async def process_message_actions(
                         uses=0,
                     )
                     session.add(user_usages)
-
-                user_usages.uses += 1
+                
                 if user_usages.uses > action.max_uses_per_user:
                     return False
+                
+                user_usages.uses += 1
 
             if action.action == db.enums.MessageActions.ADS:
                 return True
