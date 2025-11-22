@@ -134,7 +134,7 @@ async def process_message_actions(
 
 
 # ======== HANDLER FOR ALL MESSAGES ========
-@client.on_message(filters.private & filters.text)
+@client.on_message(filters.private)
 async def all_message(client: Client, message: Message):
     
     message_from_bot = False
