@@ -1,4 +1,5 @@
 import asyncio
+import json
 import re
 
 from pyrogram import filters
@@ -176,8 +177,19 @@ async def process_message_actions(
                     inline_keyboard = keyborad.json_to_keyboard(
                         action.inline_keyboard_json
                     )
+                entities = None
+                if action.entities is not None:
+                    try:
+                        entities_list = json.loads(action.entities)
+                    except json.JSONDecodeError:
+                        entities_list = None
+                    if entities_list is not None:
+                        entities = utils.list_to_entitie(entities_list)
+
                 await message.edit(
-                    action.message_replace, inline_keyboard=inline_keyboard
+                    action.message_replace,
+                    reply_markup=inline_keyboard,
+                    entities=entities,
                 )
 
 

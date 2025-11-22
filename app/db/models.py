@@ -46,6 +46,7 @@ class MessageAction(Base):
     regex: Mapped[str] = mapped_column(nullable=False)
     action: Mapped[enums.MessageActions] = mapped_column(nullable=False)
     message_replace: Mapped[TEXT] = mapped_column(nullable=True)
+    entities: Mapped[TEXT|None] = mapped_column(nullable=True)
     inline_keyboard_json: Mapped[TEXT | None] = mapped_column(
         nullable=True, default=None
     )

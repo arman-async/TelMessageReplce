@@ -85,6 +85,7 @@ class MessageAction(ModelView, model=models.MessageAction):
         models.MessageAction.run_after_join_check: "Run After Join Check",
         models.MessageAction.max_total_uses: "Max Total Uses",
         models.MessageAction.max_uses_per_user: "Max Uses Per User",
+        models.MessageAction.entities: "Entities",
 
     }
 
@@ -95,6 +96,7 @@ class MessageAction(ModelView, model=models.MessageAction):
         models.MessageAction.regex,
         models.MessageAction.action,
         models.MessageAction.message_replace,
+        models.MessageAction.entities,
         models.MessageAction.inline_keyboard_json,
         models.MessageAction.max_total_uses,
         models.MessageAction.max_uses_per_user,
