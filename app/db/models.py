@@ -46,7 +46,7 @@ class MessageAction(Base):
     regex: Mapped[str] = mapped_column(nullable=False)
     action: Mapped[enums.MessageActions] = mapped_column(nullable=False)
     message_replace: Mapped[TEXT] = mapped_column(nullable=True)
-    entities: Mapped[TEXT|None] = mapped_column(nullable=True)
+    entities: Mapped[TEXT | None] = mapped_column(nullable=True)
     inline_keyboard_json: Mapped[TEXT | None] = mapped_column(
         nullable=True, default=None
     )
@@ -65,9 +65,10 @@ class MessageActionUserUsage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    message_action_id: Mapped[int] = mapped_column(
-        ForeignKey("message_actions.id"), nullable=False
-    )
+    message_action_id: Mapped[int] = mapped_column(nullable=False)
+    # message_action_id: Mapped[int] = mapped_column(
+    #     ForeignKey("message_actions.id"), nullable=False
+    # )
 
     chat_id: Mapped[int] = mapped_column(nullable=False)
     uses: Mapped[int] = mapped_column(nullable=False, default=0)
