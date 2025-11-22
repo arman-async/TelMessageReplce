@@ -4,7 +4,7 @@ import pickle
 from functools import wraps
 from typing import Any
 
-from redis import Redis
+from redis.asyncio import Redis
 
 
 class RedisCacheFunction:
@@ -12,18 +12,16 @@ class RedisCacheFunction:
         self.redis_client = redis_client
 
     def gen_key(self, *args, **kwargs) -> str:
-        return base64.b64encode(
-            pickle.dumps({"args": args, "kwargs": kwargs})
-        ).decode()
+        return base64.b64encode(pickle.dumps({"args": args, "kwargs": kwargs})).decode()
 
-    def get_cache(self, key: str) -> Any:
-        cached_data = self.redis_client.get(key)
+    async def get_cache(self, key: str) -> Any:
+        cached_data = await self.redis_client.get(key)
         if isinstance(cached_data, bytes):
             return pickle.loads(cached_data)
         return None
 
-    def set_cache(self, key: str, data: Any, expire: int | None = None):
-        self.redis_client.set(key, pickle.dumps(data), ex=expire)
+    async def set_cache(self, key: str, data: Any, expire: int | None = None):
+        await self.redis_client.set(key, pickle.dumps(data), ex=expire)
 
     def filter_inputs(
         self,
@@ -40,7 +38,7 @@ class RedisCacheFunction:
     def cache_async(
         self,
         expire: int | None = None,
-        exclode: set[str] | None = None,
+        exclude: set[str] | None = None,
         include: set[str] | None = None,
     ):
         def decorator(func):
@@ -51,15 +49,16 @@ class RedisCacheFunction:
                 bound = sig.bind(*args, **kwargs)
                 bound.apply_defaults()
                 params_dict: dict[str, Any] = dict(bound.arguments)
-                params = self.filter_inputs(params_dict, exclode, include)
+                params = self.filter_inputs(params_dict, exclude, include)
                 key = self.gen_key(params)
-                is_cache = self.get_cache(key)
-                if is_cache:
-                    return is_cache
+
+                # now properly awaited
+                cached_value = await self.get_cache(key)
+                if cached_value is not None:
+                    return cached_value
 
                 response = await func(*args, **kwargs)
-                self.set_cache(key, response, expire)
-
+                await self.set_cache(key, response, expire)
                 return response
 
             return wrapper
