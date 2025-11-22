@@ -54,10 +54,10 @@ class MessageAction(Base):
     max_total_uses: Mapped[int | None] = mapped_column(nullable=True, default=None)
     max_uses_per_user: Mapped[int | None] = mapped_column(nullable=True, default=None)
 
-    # Relationship
-    user_usages: Mapped[list["MessageActionUserUsage"]] = relationship(
-        back_populates="message_action", cascade="all, delete-orphan"
-    )
+    # # Relationship
+    # user_usages: Mapped[list["MessageActionUserUsage"]] = relationship(
+    #     back_populates="message_action", cascade="all, delete-orphan"
+    # )
 
 
 class MessageActionUserUsage(Base):
@@ -72,5 +72,5 @@ class MessageActionUserUsage(Base):
     chat_id: Mapped[int] = mapped_column(nullable=False)
     uses: Mapped[int] = mapped_column(nullable=False, default=0)
 
-    # Relationship
-    message_action: Mapped["MessageAction"] = relationship(back_populates="user_usages")
+    # # Relationship
+    # message_action: Mapped["MessageAction"] = relationship(back_populates="user_usages")
