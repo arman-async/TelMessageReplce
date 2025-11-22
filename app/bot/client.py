@@ -2,15 +2,14 @@ from pyrogram import Client
 
 from app import config
 
-proxy = {"scheme": "socks5", "hostname": "192.168.1.100", "port": 2080}
-proxy = None
+
 client = Client(
     "bot",
     api_id=config.Bot().API_ID,
     api_hash=config.Bot().API_HASH,
     bot_token=config.Bot().TOKEN,
     workers=config.Bot().WORKERS,
-    proxy=proxy,
+    proxy=config.Bot().PROXY,
 )
 
 if config.GuardJoin().TOKEN is None:
@@ -19,7 +18,7 @@ if config.GuardJoin().TOKEN is None:
         api_id=config.GuardJoin().API_ID,
         api_hash=config.GuardJoin().API_HASH,
         bot_token=config.GuardJoin().TOKEN,
-        proxy=proxy,
+        proxy=config.Bot().PROXY,
     )
 else:
     guard_join = client

@@ -1,12 +1,13 @@
 from ast import literal_eval
 from functools import lru_cache
 from os import getenv
-
+from urllib import parse
 import yaml
 from dotenv import get_key, load_dotenv
 from pydantic import BaseModel
 
 load_dotenv()
+
 
 @lru_cache
 def get_string(key: str) -> None|str:
@@ -24,6 +25,8 @@ class Bot(BaseModel):
     TOKEN: str = getenv("BOT_TOKEN")
     WORKERS: int = int(getenv("BOT_WORKERS", "64"))
     OWNER_ID: str = int(getenv("OWNER_ID"))
+    PROXY: dict|None = literal_eval(getenv("BOT_PROXY", "None"))
+
      
 
 class GuardJoin(BaseModel):
@@ -48,6 +51,7 @@ class Database(BaseModel):
     user: str = get_key(".env", "DB_USER")
     password: str = get_key(".env", "DB_PASSWORD")
     name: str = get_key(".env", "DB_NAME")
+    max_connections: int = int(getenv("DB_MAX_CONNECTIONS", "100")) 
 
     def uri(self):
         return f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
