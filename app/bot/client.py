@@ -1,4 +1,4 @@
-from pyrogram import Client
+from pyrogram import Client, enums
 
 from app import config
 
@@ -10,6 +10,7 @@ client = Client(
     bot_token=config.Bot().TOKEN,
     workers=config.Bot().WORKERS,
     proxy=config.Bot().PROXY,
+    parse_mode=enums.ParseMode.MARKDOWN,
 )
 
 if config.GuardJoin().TOKEN is None:
@@ -19,6 +20,7 @@ if config.GuardJoin().TOKEN is None:
         api_hash=config.GuardJoin().API_HASH,
         bot_token=config.GuardJoin().TOKEN,
         proxy=config.Bot().PROXY,
+        parse_mode=enums.ParseMode.MARKDOWN,
     )
 else:
     guard_join = client

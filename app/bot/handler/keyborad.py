@@ -1,6 +1,27 @@
+import json
+
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from app.db.models import ForcedSubscription
+
+
+def json_to_keyboard(json_data: str):
+    data = json.loads(json_data)
+
+    keyboard = []
+
+    for row in data.get("inline_keyboard", []):
+        keyboard_row = []
+        for btn in row:
+            keyboard_row.append(
+                InlineKeyboardButton(
+                    text=btn["text"],
+                    url=btn.get("url"),
+                )
+            )
+        keyboard.append(keyboard_row)
+
+    return InlineKeyboardMarkup(keyboard)
 
 
 def forced_join(

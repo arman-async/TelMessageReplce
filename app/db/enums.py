@@ -6,3 +6,4 @@ class MessageActions(Enum):
     DELETE = "delete"
     REPLACE = "replace"
     ADS = "ads"
+    EDIT = "EDIT"

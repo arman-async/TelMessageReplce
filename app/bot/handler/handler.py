@@ -4,10 +4,11 @@ import re
 from pyrogram import filters
 from pyrogram.client import Client
 from pyrogram.types import Message
-from sqlalchemy import select
 from redis import Redis
-from app import config, db
-from app import logger
+from sqlalchemy import select
+
+from app import config, db, logger
+
 from .. import utils
 from ..client import client, guard_join
 from . import keyborad
@@ -54,7 +55,7 @@ async def process_forced_join(
     user_id: int,
     chat_id: int,
 ) -> bool:
-    
+
     @cache_async(expire=CACHE_TTL, include={"chat_id"})
     async def check(
         message: Message,
@@ -77,10 +78,10 @@ async def process_forced_join(
             channels = await utils.forced_join_extra(ForceJoinExtraAPI, user_id)
         else:
             channels = await utils.forced_join(guard_join, user_id)
-            
+
         if not channels:
             return False
-        
+
         keyboard = keyborad.forced_join(
             channels, MESSAGE.BUT_JOIN, MESSAGE.BUT_JOIN_URL
         )
@@ -103,6 +104,7 @@ async def process_message_actions(
     client: Client,
     message: Message,
     user_id: int,
+    has_passed_join_check: bool,
 ) -> bool:
     """
     Handle message actions
@@ -112,31 +114,77 @@ async def process_message_actions(
         result = await session.execute(select(db.models.MessageAction))
         actions = result.scalars().all()
 
-    for action in actions:
-        if message.text is None:
-            continue
-        
-        if not re.search(action.regex, message.text):
-            continue
+        for action in actions:
+            if message.text is None:
+                continue
 
-        if action.acction == db.enums.MessageActions.ADS:
-            return True
+            should_run_action = (
+                action.run_after_join_check and not has_passed_join_check
+            ) or (not action.run_after_join_check and has_passed_join_check)
 
-        if action.acction == db.enums.MessageActions.IGNORE:
-            continue
+            if should_run_action:
+                continue
 
-        if action.acction == db.enums.MessageActions.DELETE:
-            await message.delete()
+            if not re.search(action.regex, message.text):
+                continue
 
-        elif action.acction == db.enums.MessageActions.REPLACE:
-            await message.delete()
-            await client.send_message(user_id, action.message_replace)
+            if action.action == db.enums.MessageActions.IGNORE:
+                continue
+
+            if isinstance(action.max_total_uses, int):
+                action.max_total_uses -= 1
+                if action.max_total_uses <= 0:
+                    action.max_total_uses = None
+                    action.action = db.enums.MessageActions.IGNORE
+                    return False
+
+            if isinstance(action.max_uses_per_user, int):
+                user_usages = await session.execute(
+                    select(db.models.MessageActionUserUsage)
+                    .where(
+                        db.models.MessageActionUserUsage.message_action_id == action.id
+                    )
+                    .where(db.models.MessageActionUserUsage.chat_id == user_id)
+                )
+                user_usages = user_usages.scalar_one_or_none()
+
+                if user_usages is None:
+                    user_usages = db.models.MessageActionUserUsage(
+                        message_action_id=action.id,
+                        chat_id=user_id,
+                        uses=0,
+                    )
+                    session.add(user_usages)
+
+                user_usages.uses += 1
+                if user_usages.uses > action.max_uses_per_user:
+                    return False
+
+            if action.action == db.enums.MessageActions.ADS:
+                return True
+
+            if action.action == db.enums.MessageActions.DELETE:
+                await message.delete()
+
+            if action.action == db.enums.MessageActions.REPLACE:
+                await message.delete()
+                await client.send_message(user_id, action.message_replace)
+
+            if action.action == db.enums.MessageActions.EDIT:
+                inline_keyboard = None
+                if action.inline_keyboard_json is not None:
+                    inline_keyboard = keyborad.json_to_keyboard(
+                        action.inline_keyboard_json
+                    )
+                await message.edit(
+                    action.message_replace, inline_keyboard=inline_keyboard
+                )
 
 
 # ======== HANDLER FOR ALL MESSAGES ========
 @client.on_message(filters.private)
 async def all_message(client: Client, message: Message):
-    
+
     message_from_bot = False
     user_id = message.chat.id
     chat_id = message.chat.id
@@ -145,14 +193,17 @@ async def all_message(client: Client, message: Message):
         message_from_bot = True
 
     LOGGER.info(f"Processing message from User ID={user_id}")
-    
+
     async with user_processing_lock(user_id) as lock:
         if message_from_bot:
             if await process_forced_join(client, message, user_id, chat_id):
                 return
 
-        if await process_message_actions(client, message, user_id):
+        if await process_message_actions(client, message, user_id, False):
             return
 
         if await process_forced_join(client, message, user_id, chat_id):
+            return
+
+        if await process_message_actions(client, message, user_id, True):
             return

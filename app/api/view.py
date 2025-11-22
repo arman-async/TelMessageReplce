@@ -29,7 +29,6 @@ class ForcedSubscription(ModelView, model=models.ForcedSubscription):
         models.ForcedSubscription.name,
         models.ForcedSubscription.invite_link,
         models.ForcedSubscription.channel_id,
-        
     ]
     column_labels = {
         models.ForcedSubscription.id: "Id",
@@ -68,7 +67,10 @@ class MessageAction(ModelView, model=models.MessageAction):
         models.MessageAction.id,
         models.MessageAction.regex,
         models.MessageAction.name,
-        models.MessageAction.acction,
+        models.MessageAction.action,
+        models.MessageAction.run_after_join_check,
+        models.MessageAction.max_total_uses,
+        models.MessageAction.max_uses_per_user,
     ]
     column_searchable_list = [
         models.MessageAction.id,
@@ -79,7 +81,11 @@ class MessageAction(ModelView, model=models.MessageAction):
         models.MessageAction.id: "Id",
         models.MessageAction.name: "Name",
         models.MessageAction.regex: "Regex Select",
-        models.MessageAction.acction: "Acction",
+        models.MessageAction.action: "Action",
+        models.MessageAction.run_after_join_check: "Run After Join Check",
+        models.MessageAction.max_total_uses: "Max Total Uses",
+        models.MessageAction.max_uses_per_user: "Max Uses Per User",
+
     }
 
 
@@ -87,8 +93,12 @@ class MessageAction(ModelView, model=models.MessageAction):
     form_columns = [
         models.MessageAction.name,
         models.MessageAction.regex,
-        models.MessageAction.acction,
+        models.MessageAction.action,
         models.MessageAction.message_replace,
+        models.MessageAction.inline_keyboard_json,
+        models.MessageAction.max_total_uses,
+        models.MessageAction.max_uses_per_user,
+        models.MessageAction.run_after_join_check,
     ]
     
     # ========== Permissions ==========
