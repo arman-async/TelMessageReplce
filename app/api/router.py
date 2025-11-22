@@ -1,6 +1,8 @@
 from fastcrud import crud_router
-from . import schemas
+
 from app import db
+
+from . import schemas
 
 forced_subscription = crud_router(
     session=db.get_session_depen,
