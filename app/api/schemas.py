@@ -51,7 +51,7 @@ class MessageActionsCreate(BaseModel):
     @field_validator("entities", "inline_keyboard_json")
     def convert_dict_to_json(cls, v):
         if v is None:
-            return json.dumps(None)
+            return json.dumps(dict())
         
         if isinstance(v, BaseModel):
             v = v.model_dump()
