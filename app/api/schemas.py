@@ -43,7 +43,7 @@ class MessageActionsCreate(BaseModel):
     action: enums.MessageActions
     message_replace: str
     entities: list[Entities] | None = None
-    inline_keyboard_json: InlineKeyboardJson | None
+    inline_keyboard_json: InlineKeyboardJson | None = None
     max_total_uses: int
     max_uses_per_user: int
     run_after_join_check: bool
