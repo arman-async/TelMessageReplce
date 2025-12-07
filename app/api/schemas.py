@@ -28,7 +28,7 @@ class MessageActionsCreate(BaseModel):
         offset: int
         length: int
         url: str | None = None
-        anguage:str | None = None
+        language:str | None = None
         custom_emoji_id:int| None = None
 
     class InlineKeyboardJson(BaseModel):
@@ -51,7 +51,7 @@ class MessageActionsCreate(BaseModel):
     @field_validator("entities", "inline_keyboard_json")
     def convert_dict_to_json(cls, v):
         if v is None:
-            return json.dumps(dict())
+            return json.dumps(None)
         
         if isinstance(v, BaseModel):
             v = v.model_dump()
