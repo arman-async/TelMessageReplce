@@ -150,7 +150,8 @@ async def process_message_actions(
                     if action.max_total_uses <= 0:
                         action.max_total_uses = None
                         action.action = db.enums.MessageActions.IGNORE
-                        return False
+                        await session.commit()
+                        continue
 
                 if isinstance(action.max_uses_per_user, int):
                     user_usages = await session.execute(
@@ -171,9 +172,10 @@ async def process_message_actions(
                         session.add(user_usages)
 
                     if user_usages.uses > action.max_uses_per_user:
-                        return False
+                        continue
 
                     user_usages.uses += 1
+                    await session.commit()
 
                 if action.action == db.enums.MessageActions.ADS:
                     return True
