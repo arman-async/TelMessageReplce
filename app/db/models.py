@@ -70,7 +70,7 @@ class MessageActionUserUsage(Base):
     #     ForeignKey("message_actions.id"), nullable=False
     # )
 
-    chat_id: Mapped[int] = mapped_column(nullable=False)
+    chat_id: Mapped[str] = mapped_column(nullable=False)
     uses: Mapped[int] = mapped_column(nullable=False, default=0)
 
     # # Relationship
