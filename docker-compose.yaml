@@ -36,7 +36,7 @@ services:
 
 
   app:
-    image: reguard-bot:release-V2.5
+    image: reguard-bot:release-V2.11.3
     restart: unless-stopped
     build:
       context: .
