@@ -42,7 +42,7 @@ class MessageActionsCreate(BaseModel):
     regex: str
     action: enums.MessageActions
     message_replace: str
-    entities: list[Entities|None] = []
+    entities: list[Entities] | None = None
     inline_keyboard_json: InlineKeyboardJson | None
     max_total_uses: int
     max_uses_per_user: int
