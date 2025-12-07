@@ -20,7 +20,10 @@ def json_to_keyboard(json_data: str):
                 )
             )
         keyboard.append(keyboard_row)
-
+        
+    if not keyboard:
+        return None
+    
     return InlineKeyboardMarkup(keyboard)
 
 
