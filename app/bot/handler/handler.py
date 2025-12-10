@@ -6,7 +6,7 @@ from pyrogram import filters
 from pyrogram.client import Client
 from pyrogram.types import Message
 from redis import Redis
-from sqlalchemy import select
+from sqlalchemy import case, select
 
 from app import config, db, logger
 
@@ -111,11 +111,16 @@ async def process_message_actions(
     Handle message actions
     Returns (true) only if the message is an advertisement.
     """
-
+    sorter = case(
+        (db.models.MessageAction.action == db.enums.MessageActions.IGNORE, 0),
+        (db.models.MessageAction.action == db.enums.MessageActions.EDIT, 1),
+        else_=2,
+    )
     async with db.get_session() as session:
-        result = await session.execute(select(db.models.MessageAction))
+        result = await session.execute(
+            select(db.models.MessageAction).order_by(sorter, db.models.MessageAction.id)
+        )
         actions = result.scalars().all()
-
         for action in actions:
             if message.text is None:
                 continue
