@@ -111,104 +111,92 @@ async def process_message_actions(
     Handle message actions
     Returns (true) only if the message is an advertisement.
     """
+
     async with db.get_session() as session:
-          # اینجا امیر گفت میخوام وقتی ادیت شد بقیه ادیت ها نادیده گرفته شود
-        for acction_type in [
-            db.enums.MessageActions.IGNORE,
-            db.enums.MessageActions.DELETE,
-            db.enums.MessageActions.REPLACE,
-            db.enums.MessageActions.ADS,
-            db.enums.MessageActions.EDIT,
-        ]:
-            result = await session.execute(
-                select(db.models.MessageAction).where(
-                      # اینجا امیر گفت میخوام وقتی ادیت شد بقیه ادیت ها نادیده گرفته شود
-                    db.models.MessageAction.action == acction_type
-                )
-            )
-            actions = result.scalars().all()
+        result = await session.execute(select(db.models.MessageAction))
+        actions = result.scalars().all()
 
-            for action in actions:
-                if message.text is None:
-                    continue
+        for action in actions:
+            if message.text is None:
+                continue
 
-                should_run_action = (
-                    action.run_after_join_check and not has_passed_join_check
-                ) or (not action.run_after_join_check and has_passed_join_check)
+            should_run_action = (
+                action.run_after_join_check and not has_passed_join_check
+            ) or (not action.run_after_join_check and has_passed_join_check)
 
-                if should_run_action:
-                    continue
+            if should_run_action:
+                continue
 
-                if not re.search(action.regex, message.text):
-                    continue
+            if not re.search(action.regex, message.text):
+                continue
 
-                if action.action == db.enums.MessageActions.IGNORE:
-                    continue
+            if action.action == db.enums.MessageActions.IGNORE:
+                continue
 
-                if isinstance(action.max_total_uses, int):
-                    action.max_total_uses -= 1
-                    if action.max_total_uses <= 0:
-                        action.max_total_uses = None
-                        action.action = db.enums.MessageActions.IGNORE
-                        await session.commit()
-                        continue
-
-                if isinstance(action.max_uses_per_user, int):
-                    user_usages = await session.execute(
-                        select(db.models.MessageActionUserUsage)
-                        .where(
-                            db.models.MessageActionUserUsage.message_action_id == action.id
-                        )
-                        .where(db.models.MessageActionUserUsage.chat_id == user_id)
-                    )
-                    user_usages = user_usages.scalar_one_or_none()
-
-                    if user_usages is None:
-                        user_usages = db.models.MessageActionUserUsage(
-                            message_action_id=action.id,
-                            chat_id=user_id,
-                            uses=0,
-                        )
-                        session.add(user_usages)
-
-                    if user_usages.uses > action.max_uses_per_user:
-                        continue
-
-                    user_usages.uses += 1
+            if isinstance(action.max_total_uses, int):
+                action.max_total_uses -= 1
+                if action.max_total_uses <= 0:
+                    action.max_total_uses = None
+                    action.action = db.enums.MessageActions.IGNORE
                     await session.commit()
+                    continue
 
-                if action.action == db.enums.MessageActions.ADS:
-                    return True
-
-                if action.action == db.enums.MessageActions.DELETE:
-                    await message.delete()
-
-                if action.action == db.enums.MessageActions.REPLACE:
-                    await message.delete()
-                    await client.send_message(user_id, action.message_replace)
-
-                if action.action == db.enums.MessageActions.EDIT:
-                    inline_keyboard = None
-                    if action.inline_keyboard_json is not None:
-                        inline_keyboard = keyborad.json_to_keyboard(
-                            action.inline_keyboard_json
-                        )
-                    entities = None
-                    if action.entities is not None:
-                        try:
-                            entities_list = json.loads(action.entities)
-                        except json.JSONDecodeError:
-                            entities_list = None
-                        if entities_list is not None:
-                            entities = utils.list_to_entitie(entities_list)
-
-                    await message.edit(
-                        action.message_replace,
-                        reply_markup=inline_keyboard,
-                        entities=entities,
+            if isinstance(action.max_uses_per_user, int):
+                user_usages = await session.execute(
+                    select(db.models.MessageActionUserUsage)
+                    .where(
+                        db.models.MessageActionUserUsage.message_action_id == action.id
                     )
-                    # اینجا امیر گفت میخوام وقتی ادیت شد بقیه ادیت ها نادیده گرفته شود
-                    break
+                    .where(db.models.MessageActionUserUsage.chat_id == user_id)
+                )
+                user_usages = user_usages.scalar_one_or_none()
+
+                if user_usages is None:
+                    user_usages = db.models.MessageActionUserUsage(
+                        message_action_id=action.id,
+                        chat_id=user_id,
+                        uses=0,
+                    )
+                    session.add(user_usages)
+
+                if user_usages.uses > action.max_uses_per_user:
+                    continue
+
+                user_usages.uses += 1
+                await session.commit()
+
+            if action.action == db.enums.MessageActions.ADS:
+                return True
+
+            if action.action == db.enums.MessageActions.DELETE:
+                await message.delete()
+
+            if action.action == db.enums.MessageActions.REPLACE:
+                await message.delete()
+                await client.send_message(user_id, action.message_replace)
+
+            if action.action == db.enums.MessageActions.EDIT:
+                inline_keyboard = None
+                if action.inline_keyboard_json is not None:
+                    inline_keyboard = keyborad.json_to_keyboard(
+                        action.inline_keyboard_json
+                    )
+                entities = None
+                if action.entities is not None:
+                    try:
+                        entities_list = json.loads(action.entities)
+                    except json.JSONDecodeError:
+                        entities_list = None
+                    if entities_list is not None:
+                        entities = utils.list_to_entitie(entities_list)
+
+                await message.edit(
+                    action.message_replace,
+                    reply_markup=inline_keyboard,
+                    entities=entities,
+                )
+                # اینجا امیر گفت میخوام وقتی ادیت شد بقیه ادیت ها نادیده گرفته شود
+                break
 
 
 # ======== HANDLER FOR ALL MESSAGES ========
